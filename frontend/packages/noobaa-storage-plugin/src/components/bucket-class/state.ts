@@ -3,6 +3,8 @@ import { BackingStoreKind, PlacementPolicy } from '../../types';
 export const initialState = {
   namespace: 'openshift-storage',
   bucketClassName: '',
+  bucketClassType: 'STANDARD',
+  namespacePolicyType: 'SINGLE',
   description: '',
   tier1Policy: PlacementPolicy.Spread,
   tier2Policy: null,
@@ -12,9 +14,22 @@ export const initialState = {
   error: '',
 };
 
+export enum BucketClassType {
+  STANDARD = 'STANDARD',
+  NAMESPACE = 'NAMESPACE',
+}
+
+export enum NamespacePolicyType {
+  SINGLE = 'SINGLE',
+  MULTI = 'MULTI',
+  CACHE = 'CACHE',
+}
+
 export type State = {
   namespace: string;
   bucketClassName: string;
+  bucketClassType: string;
+  namespacePolicyType: string;
   description: string;
   tier1Policy: PlacementPolicy;
   tier2Policy: PlacementPolicy;
@@ -27,6 +42,8 @@ export type State = {
 export type Action =
   | { type: 'setNamespace'; name: string }
   | { type: 'setBucketClassName'; name: string }
+  | { type: 'setBucketClassType'; name: string }
+  | { type: 'setNamespacePolicyType'; name: string }
   | { type: 'setDescription'; value: string }
   | { type: 'setPlacementPolicyTier1'; value: PlacementPolicy }
   | { type: 'setPlacementPolicyTier2'; value: PlacementPolicy }
@@ -41,6 +58,10 @@ export const reducer = (state: State, action: Action) => {
       return Object.assign({}, state, { namespace: action.name });
     case 'setBucketClassName':
       return Object.assign({}, state, { bucketClassName: action.name });
+    case 'setBucketClassType':
+      return Object.assign({}, state, { bucketClassType: action.name });
+    case 'setNamespacePolicyType':
+      return Object.assign({}, state, { namespacePolicyType: action.name });
     case 'setDescription':
       return Object.assign({}, state, { description: action.value });
     case 'setPlacementPolicyTier1':

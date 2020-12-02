@@ -110,7 +110,7 @@ const CreateBucketClass: React.FC<CreateBCProps> = ({ match }) => {
       id: CreateStepsBC.PLACEMENT,
       name: 'Placement Policy',
       component: <PlacementPolicyPage state={state} dispatch={dispatch} />,
-      enableNext: !!state.tier1Policy,
+      enableNext: !!state.tier1Policy || state.namespacePolicyType.trim().length > 0,
     },
     {
       id: CreateStepsBC.BACKINGSTORE,
