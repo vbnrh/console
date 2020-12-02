@@ -28,6 +28,20 @@ export const NooBaaBackingStoreModel: K8sKind = {
   legacyPluralURL: true,
 };
 
+export const NooBaaNamespaceStoreModel: K8sKind = {
+  label: 'Namespace Store',
+  labelPlural: 'Namespace Stores',
+  apiVersion: 'v1alpha1',
+  apiGroup: 'noobaa.io',
+  plural: 'namespacestores',
+  abbr: 'NS',
+  namespaced: true,
+  kind: 'NamespaceStore',
+  id: 'noobaanamespacestore',
+  crd: true,
+  legacyPluralURL: true,
+};
+
 export const NooBaaBucketClassModel: K8sKind = {
   label: 'Bucket Class',
   labelPlural: 'Bucket Classes',

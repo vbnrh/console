@@ -1,0 +1,82 @@
+.nb-ns-form-entry {
+    width:100%;
+}
+
+.nb-ns-form-entry input {
+    max-width: unset;
+}
+
+.nb-ns-form-entry--short {
+    width:20%;
+}
+.nb-ns-form-entry--full-width {
+    width:100%;
+}
+
+.nb-ns-form-entry__dropdown, .nb-ns-form-entry__dropdown > div {
+    width:100%;
+}
+
+.nb-ns-page {
+    margin-left: var(--pf-global--spacer--lg);
+    margin-right: var(--pf-global--spacer--lg);
+    margin-top: var(--pf-global--spacer--lg);
+}
+
+.nb-ns-page__breadcrumbs {
+    margin-top: var(--pf-global--spacer--sm);
+    margin-bottom: var(--pf-global--spacer--sm);
+}
+
+.nb-ns-page-title {
+    margin-bottom: var(--pf-global--spacer--lg);
+}
+
+.nb-ns-page-title__main {
+    margin-bottom: var(--pf-global--spacer--sm);
+}
+
+.nb-ns-page-title__info {
+    color: var(--pf-global--disabled-color--100);
+}
+
+.nb-ns-form {
+    width:100%;
+    margin-top: var(--pf-global--spacer--lg);
+    margin-bottom: var(--pf-global--spacer--lg);
+}
+
+.nb-ns-form-entry {
+    margin-top: var(--pfd-global-space-sm);
+    margin-bottom: var(--pfd-global-space-sm);
+}
+
+.nb-ns-form-entry__file-upload {
+    border:none;
+}
+
+.nb-ns-form-entry__data-dump {
+    min-height:5em;
+}
+
+.nb-ns-form-entry-upload-btn__input {
+    position: absolute;
+    opacity: 0;
+}
+
+.nb-ns-form-entry-upload-btn {
+    display: flex;
+}
+
+.nb-create-ns__modal {
+    background-color: var(--pf-global--BackgroundColor--100);
+}
+
+.nb-ns-page-form__short {
+    width: 80%;
+}
+
+.nb-ns-form-entry__dropdown--short {
+    overflow-y: auto;
+    max-height: 30vh;
+}
