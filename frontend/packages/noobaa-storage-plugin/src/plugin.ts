@@ -71,6 +71,25 @@ const plugin: Plugin<ConsumedExtensions> = [
     },
   },
   {
+    type: 'Page/Route',
+    properties: {
+      exact: true,
+      path: [
+        `/k8s/ns/:ns/${ClusterServiceVersionModel.plural}/:appName/${referenceForModel(
+          models.NooBaaNamespaceStoreModel,
+        )}/~new`,
+        `/k8s/ns/:ns/${referenceForModel(models.NooBaaNamespaceStoreModel)}/~new`,
+      ],
+      loader: () =>
+        import(
+          './components/namespace-store/create-ns-page' /* webpackChunkName: "create-bs" */
+        ).then((m) => m.default),
+    },
+    flags: {
+      required: [NOOBAA_FLAG],
+    },
+  },
+  {
     type: 'FeatureFlag/Model',
     properties: {
       model: models.NooBaaSystemModel,
