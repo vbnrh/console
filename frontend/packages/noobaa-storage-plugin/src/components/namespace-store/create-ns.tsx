@@ -32,6 +32,7 @@ import { history } from '@console/internal/components/utils/router';
 import { CEPH_STORAGE_NAMESPACE } from '@console/ceph-storage-plugin/src/constants';
 import { NooBaaNamespaceStoreModel } from '../../models';
 import './create-ns.scss';
+import {awsRegionItems, endpointSupported, S3EndPointType,StoreType, getProviders, getExternalProviders} from '../bs-ns-common/bs-ns-common'
 import {
   BC_PROVIDERS,
   AWS_REGIONS,
@@ -40,175 +41,11 @@ import {
   BUCKET_LABEL_NOOBAA_MAP,
 } from '../../constants';
 
-const PROVIDERS = (() => {
-  const values = Object.values(BC_PROVIDERS).filter(
-    (provider) => provider !== BC_PROVIDERS.GCP && provider !== BC_PROVIDERS.PVC,
-  );
-  return _.zipObject(values, values);
-})();
+const PROVIDERS = getProviders(StoreType.NS)
 
-const awsRegionItems = _.zipObject(AWS_REGIONS, AWS_REGIONS);
-const externalProviders = [BC_PROVIDERS.AWS, BC_PROVIDERS.AZURE, BC_PROVIDERS.S3, BC_PROVIDERS.IBM];
-const endpointSupported = [BC_PROVIDERS.S3, BC_PROVIDERS.IBM];
+const externalProviders = getExternalProviders(StoreType.NS)
 
-/**
- * aws-s3, s3 compatible, IBM COS share the same form
- */
-const S3EndPointType: React.FC<S3EndpointTypeProps> = (props) => {
-  const { t } = useTranslation();
-
-  const [showSecret, setShowSecret] = React.useState(true);
-  const { provider, namespace, state, dispatch } = props;
-
-  const targetLabel =
-    provider === BC_PROVIDERS.AZURE
-      ? t('noobaa-storage-plugin~Target Blob Container')
-      : t('noobaa-storage-plugin~Target Bucket');
-  const credentialField1Label =
-    provider === BC_PROVIDERS.AZURE
-      ? t('noobaa-storage-plugin~Account Name')
-      : t('noobaa-storage-plugin~Access Key');
-  const credentialField2Label =
-    provider === BC_PROVIDERS.AZURE
-      ? t('noobaa-storage-plugin~Account Key')
-      : t('noobaa-storage-plugin~Secret Key');
-  const resources = [
-    {
-      isList: true,
-      namespace,
-      kind: SecretModel.kind,
-      prop: 'secrets',
-    },
-  ];
-
-  const switchToSecret = () => {
-    setShowSecret(true);
-    dispatch({ type: 'setAccessKey', value: '' });
-    dispatch({ type: 'setSecretKey', value: '' });
-  };
-
-  const switchToCredentials = () => {
-    setShowSecret(false);
-    dispatch({ type: 'setSecretName', value: '' });
-  };
-
-  return (
-    <>
-      {provider === BC_PROVIDERS.AWS && (
-        <FormGroup
-          label={t('noobaa-storage-plugin~Region')}
-          fieldId="region"
-          className="nb-ns-form-entry"
-          isRequired
-        >
-          <Dropdown
-            className="nb-ns-form-entry__dropdown"
-            menuClassName="nb-ns-form-entry__dropdown--short"
-            buttonClassName="nb-ns-form-entry__dropdown"
-            dataTest="namespacestore-aws-region-dropdown"
-            onChange={(e) => {
-              dispatch({ type: 'setRegion', value: e });
-            }}
-            items={awsRegionItems}
-            selectedKey={AWS_REGIONS[0]}
-            aria-label={t('noobaa-storage-plugin~Region Dropdown')}
-          />
-        </FormGroup>
-      )}
-
-      {endpointSupported.includes(provider) && (
-        <FormGroup
-          label={t('noobaa-storage-plugin~Endpoint')}
-          fieldId="endpoint"
-          className="nb-ns-form-entry"
-          isRequired
-        >
-          <TextInput
-            data-test="namespacestore-s3-endpoint"
-            onChange={(e) => {
-              dispatch({ type: 'setEndpoint', value: e });
-            }}
-            value={state.endpoint}
-            aria-label={t('noobaa-storage-plugin~Endpoint Address')}
-          />
-        </FormGroup>
-      )}
-
-      {showSecret ? (
-        <FormGroup
-          label={t('noobaa-storage-plugin~Secret')}
-          fieldId="secret-dropdown"
-          className="nb-ns-form-entry nb-ns-form-entry--full-width"
-          isRequired
-        >
-          <InputGroup>
-            <Firehose resources={resources}>
-              <ResourceDropdown
-                selectedKey={state.secretName}
-                placeholder={t('noobaa-storage-plugin~Select Secret')}
-                className="nb-ns-form-entry__dropdown nb-ns-form-entry__dropdown--full-width"
-                buttonClassName="nb-ns-form-entry__dropdown"
-                dataSelector={['metadata', 'name']}
-                onChange={(e) => dispatch({ type: 'setSecretName', value: e })}
-              />
-            </Firehose>
-            <Button variant="plain" data-test="switch-to-creds" onClick={switchToCredentials}>
-              {t('noobaa-storage-plugin~Switch to Credentials')}
-            </Button>
-          </InputGroup>
-        </FormGroup>
-      ) : (
-        <>
-          <FormGroup label={credentialField1Label} fieldId="acess-key">
-            <InputGroup>
-              <TextInput
-                data-test="namespacestore-access-key"
-                value={state.accessKey}
-                onChange={(e) => {
-                  dispatch({ type: 'setAccessKey', value: e });
-                }}
-                aria-label={t('noobaa-storage-plugin~Access Key Field')}
-              />
-              <Button variant="plain" onClick={switchToSecret}>
-                {t('noobaa-storage-plugin~Switch to Secret')}
-              </Button>
-            </InputGroup>
-          </FormGroup>
-          <FormGroup
-            className="nb-ns-form-entry"
-            label={credentialField2Label}
-            fieldId="secret-key"
-          >
-            <TextInput
-              value={state.secretKey}
-              data-test="namespacestore-secret-key"
-              onChange={(e) => {
-                dispatch({ type: 'setSecretKey', value: e });
-              }}
-              aria-label={t('noobaa-storage-plugin~Secret Key Field')}
-              type="password"
-            />
-          </FormGroup>
-        </>
-      )}
-      <FormGroup
-        label={targetLabel}
-        fieldId="target-bucket"
-        className="nb-ns-form-entry"
-        isRequired
-      >
-        <TextInput
-          value={state.target}
-          data-test="namespacestore-target-bucket"
-          onChange={(e) => dispatch({ type: 'setTarget', value: e })}
-          aria-label={targetLabel}
-        />
-      </FormGroup>
-    </>
-  );
-};
-
-type ProviderDataState = {
+type NSProviderDataState = {
   secretName: string;
   secretKey: string;
   accessKey: string;
@@ -239,7 +76,7 @@ type NSPayload = {
   };
 };
 
-const initialState: ProviderDataState = {
+const initialState: NSProviderDataState = {
   secretName: '',
   secretKey: '',
   accessKey: '',
@@ -248,7 +85,7 @@ const initialState: ProviderDataState = {
   endpoint: '',
 };
 
-const providerDataReducer = (state: ProviderDataState, action: Action) => {
+const nsProviderDataReducer = (state: NSProviderDataState, action: Action) => {
   const { value } = action;
   switch (action.type) {
     case 'setSecretName':
@@ -316,7 +153,7 @@ const CreateNamespaceStoreForm: React.FC<CreateNamespaceStoreFormProps> = withHa
   const [nsName, setNsName] = React.useState('');
   const [provider, setProvider] = React.useState(BC_PROVIDERS.AWS);
   const [providerDataState, providerDataDispatch] = React.useReducer(
-    providerDataReducer,
+    nsProviderDataReducer,
     initialState,
   );
 
@@ -483,11 +320,4 @@ type CreateNamespaceStoreFormProps = ModalComponentProps & {
   namespace?: string;
   className?: string;
   csv?: K8sResourceKind;
-};
-
-type S3EndpointTypeProps = {
-  state: ProviderDataState;
-  dispatch: React.Dispatch<Action>;
-  provider: BC_PROVIDERS;
-  namespace: string;
 };
