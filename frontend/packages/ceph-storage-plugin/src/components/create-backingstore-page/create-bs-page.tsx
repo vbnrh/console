@@ -8,7 +8,7 @@ import { BreadCrumbs, resourcePathFromModel } from '@console/internal/components
 import { k8sGet } from '@console/internal/module/k8s';
 import { ClusterServiceVersionModel } from '@console/operator-lifecycle-manager/src/models';
 import CreateBackingStoreForm from './create-bs';
-import './create-bs.scss';
+import '../endpoints/endpoints.scss';
 
 const CreateBackingStoreFormPage: React.FC<CreateBackingStoreFormPageProps> = ({ match }) => {
   const { t } = useTranslation();
@@ -46,18 +46,18 @@ const CreateBackingStoreFormPage: React.FC<CreateBackingStoreFormPageProps> = ({
             ]}
           />
         </div>
-        <div className="nb-bs-page-title">
-          <Title size="2xl" headingLevel="h1" className="nb-bs-page-title__main">
+        <div className="nb-bs-ns-page-title">
+          <Title size="2xl" headingLevel="h1" className="nb-bs-ns-page-title__main">
             {t('ceph-storage-plugin~Create new Backing Store')}
           </Title>
-          <p className="nb-bs-page-title__info">
+          <p className="nb-bs-ns-page-title__info">
             {t(
               'ceph-storage-plugin~Storage targets that are used to store chunks of data on Multicloud Object Gateway buckets.',
             )}
           </p>
         </div>
       </div>
-      <div className="nb-bs-page">
+      <div className="nb-bs-ns-page">
         {showHelp && (
           <Alert
             isInline
@@ -78,7 +78,7 @@ const CreateBackingStoreFormPage: React.FC<CreateBackingStoreFormPageProps> = ({
           cancel={onCancel}
           isPage
           namespace={ns}
-          className="nb-bs-page-form__short"
+          className="nb-bs-ns-page-form__short"
           csv={clusterServiceVersion}
         />
       </div>

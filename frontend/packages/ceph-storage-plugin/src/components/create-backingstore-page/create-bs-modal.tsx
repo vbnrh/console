@@ -7,13 +7,13 @@ import {
   ModalTitle,
 } from '@console/internal/components/factory';
 import CreateBackingStoreForm from './create-bs';
-import './create-bs.scss';
+import '../endpoints/endpoints.scss';
 
 const CreateBackingStoreFormModal: React.FC<CreateBackingStoreFormModal> = (props) => {
   const { t } = useTranslation();
 
   return (
-    <div className="nb-create-bs__modal">
+    <div className="nb-create-bs-ns__modal">
       <ModalTitle>{t('ceph-storage-plugin~Create new Backing Store')}</ModalTitle>
       <ModalBody>
         <p>

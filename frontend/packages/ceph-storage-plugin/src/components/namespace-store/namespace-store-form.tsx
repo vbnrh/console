@@ -19,8 +19,7 @@ import { getName } from '@console/shared';
 import { SecretModel } from '@console/internal/models';
 import { history } from '@console/internal/components/utils/router';
 import { CEPH_STORAGE_NAMESPACE } from '@console/ceph-storage-plugin/src/constants';
-import { NooBaaBackingStoreModel } from '../../models';
-import '../endpoints/endpoints.scss';
+import { NooBaaNamespaceStoreModel } from '../../models';
 import {
   BC_PROVIDERS,
   AWS_REGIONS,
@@ -34,28 +33,23 @@ import {
   getProviders,
   secretPayloadCreator,
 } from '../../utils/noobaa-utils';
-import { Payload, BackingStoreProviderDataState, BackingStoreAction } from '../../types';
-import { PVCType } from '../endpoints/pvc-endpoint-type';
+import { Payload, ProviderDataState, StoreAction } from '../../types';
+import '../endpoints/endpoints.scss';
 import { S3EndPointType } from '../endpoints/s3-endpoint-type';
-import { GCPEndpointType } from '../endpoints/gcp-endpoint-type';
 
-const PROVIDERS = getProviders(StoreType.BS);
-const externalProviders = getExternalProviders(StoreType.BS);
+const PROVIDERS = getProviders(StoreType.NS);
+const externalProviders = getExternalProviders(StoreType.NS);
 
-const initialState: BackingStoreProviderDataState = {
+const initialState: ProviderDataState = {
   secretName: '',
   secretKey: '',
   accessKey: '',
   region: AWS_REGIONS[0],
-  gcpJSON: '',
   target: '',
   endpoint: '',
-  numVolumes: 1,
-  volumeSize: '50Gi',
-  storageClass: '',
 };
 
-const providerDataReducer = (state: BackingStoreProviderDataState, action: BackingStoreAction) => {
+const providerDataReducer = (state: ProviderDataState, action: StoreAction) => {
   const { value } = action;
   switch (action.type) {
     case 'setSecretName':
@@ -66,37 +60,29 @@ const providerDataReducer = (state: BackingStoreProviderDataState, action: Backi
       return Object.assign({}, state, { accessKey: value });
     case 'setRegion':
       return Object.assign({}, state, { region: value });
-    case 'setGcpJSON':
-      return Object.assign({}, state, { gcpJSON: value });
     case 'setTarget':
       return Object.assign({}, state, { target: value });
     case 'setEndpoint':
       return Object.assign({}, state, { endpoint: value });
-    case 'setVolumes':
-      return Object.assign({}, state, { numVolumes: value });
-    case 'setVolumeSize':
-      return Object.assign({}, state, { volumeSize: value });
-    case 'setStorageClass':
-      return Object.assign({}, state, { storageClass: value });
     default:
       return initialState;
   }
 };
 
-const CreateBackingStoreForm: React.FC<CreateBackingStoreFormProps> = withHandlePromise<
-  CreateBackingStoreFormProps & HandlePromiseProps
+const NamespaceStoreForm: React.FC<NamespaceStoreFormProps> = withHandlePromise<
+  NamespaceStoreFormProps & HandlePromiseProps
 >((props) => {
   const { t } = useTranslation();
-  const [bsName, setBsName] = React.useState('');
+  const [nsName, setNsName] = React.useState('');
   const [provider, setProvider] = React.useState(BC_PROVIDERS.AWS);
   const [providerDataState, providerDataDispatch] = React.useReducer(
     providerDataReducer,
     initialState,
   );
 
-  const handleBsNameTextInputChange = (strVal: string) => {
+  const handleNsNameTextInputChange = (strVal: string) => {
     if (strVal.length <= 43) {
-      setBsName(strVal);
+      setNsName(strVal);
     }
   };
 
@@ -117,46 +103,35 @@ const CreateBackingStoreForm: React.FC<CreateBackingStoreFormProps> = withHandle
     /** Create a secret if secret ==='' */
     let { secretName } = providerDataState;
     const promises = [];
-    if (!secretName && provider !== BC_PROVIDERS.PVC) {
-      secretName = bsName.concat('-secret');
-      const { secretKey, accessKey, gcpJSON } = providerDataState;
+    if (!secretName) {
+      secretName = nsName.concat('-secret');
+      const { secretKey, accessKey } = providerDataState;
       const secretPayload = secretPayloadCreator(
         provider,
         namespace,
         secretName,
-        accessKey || gcpJSON,
+        accessKey,
         secretKey,
       );
       providerDataDispatch({ type: 'setSecretName', value: secretName });
       promises.push(k8sCreate(SecretModel, secretPayload));
     }
-    /** Payload for bs */
-    const bsPayload: Payload = {
-      apiVersion: apiVersionForModel(NooBaaBackingStoreModel),
-      kind: NooBaaBackingStoreModel.kind,
+    /** Payload for ns */
+    const nsPayload: Payload = {
+      apiVersion: apiVersionForModel(NooBaaNamespaceStoreModel),
+      kind: NooBaaNamespaceStoreModel.kind,
       metadata: {
         namespace,
-        name: bsName,
+        name: nsName,
       },
       spec: {
         type: NOOBAA_TYPE_MAP[provider],
         ssl: false,
       },
     };
-    if (provider === BC_PROVIDERS.PVC) {
-      // eslint-disable-next-line
-      bsPayload.spec['pvPool'] = {
-        numVolumes: providerDataState.numVolumes,
-        storageClass: providerDataState.storageClass,
-        resources: {
-          requests: {
-            storage: providerDataState.volumeSize,
-          },
-        },
-      };
-    } else if (externalProviders.includes(provider)) {
-      bsPayload.spec = {
-        ...bsPayload.spec,
+    if (externalProviders.includes(provider)) {
+      nsPayload.spec = {
+        ...nsPayload.spec,
         [PROVIDERS_NOOBAA_MAP[provider]]: {
           [BUCKET_LABEL_NOOBAA_MAP[provider]]: providerDataState.target,
           secret: {
@@ -168,26 +143,26 @@ const CreateBackingStoreForm: React.FC<CreateBackingStoreFormProps> = withHandle
     }
     if (provider === BC_PROVIDERS.S3) {
       // eslint-disable-next-line
-      bsPayload.spec['s3Compatible'] = {
+      nsPayload.spec['s3Compatible'] = {
         // eslint-disable-next-line
-        ...bsPayload.spec['s3Compatible'],
+        ...nsPayload.spec['s3Compatible'],
         endpoint: providerDataState.endpoint,
       };
     } else if (provider === BC_PROVIDERS.IBM) {
-      bsPayload.spec.ibmCos = { ...bsPayload.spec.ibmCos, endpoint: providerDataState.endpoint };
+      nsPayload.spec.ibmCos = { ...nsPayload.spec.ibmCos, endpoint: providerDataState.endpoint };
     }
     // Add region in the end
     if (provider === BC_PROVIDERS.AWS) {
-      bsPayload.spec.awsS3 = { ...bsPayload.spec.awsS3, region: providerDataState.region };
+      nsPayload.spec.awsS3 = { ...nsPayload.spec.awsS3, region: providerDataState.region };
     }
 
-    promises.push(k8sCreate(NooBaaBackingStoreModel, bsPayload));
+    promises.push(k8sCreate(NooBaaNamespaceStoreModel, nsPayload));
     return handlePromise(Promise.all(promises), (resource) => {
       const lastIndex = resource.length - 1;
       if (isPage)
         history.push(
           `/k8s/ns/${namespace}/clusterserviceversions/${getName(csv)}/${referenceForModel(
-            NooBaaBackingStoreModel,
+            NooBaaNamespaceStoreModel,
           )}/${getName(resource[lastIndex])}`,
         );
       else close();
@@ -195,26 +170,29 @@ const CreateBackingStoreForm: React.FC<CreateBackingStoreFormProps> = withHandle
   };
 
   return (
-    <Form className={classNames('nb-bs-ns-form', className)} onSubmit={onSubmit}>
+    <Form className={classNames('nb-bs-ns-form', className)} onSubmit={onSubmit} noValidate={false}>
       <FormGroup
-        label={t('ceph-storage-plugin~Backing Store Name')}
-        fieldId="backingstore-name"
+        label={t('ceph-storage-plugin~Namespace Store Name')}
+        fieldId="namespacestore-name"
         className="nb-bs-ns-form-entry"
-        helperText={t('ceph-storage-plugin~A unique name for the backing store within the project')}
+        helperText={t(
+          'ceph-storage-plugin~A unique name for the namespace store within the project',
+        )}
         isRequired
       >
         <Tooltip
           content="Name can contain a max of 43 characters"
-          isVisible={bsName.length > 42}
+          isVisible={nsName.length > 42}
           trigger="manual"
         >
           <TextInput
-            onChange={handleBsNameTextInputChange}
-            value={bsName}
+            id="ns-name"
+            onChange={handleNsNameTextInputChange}
+            value={nsName}
             maxLength={43}
-            data-test="backingstore-name"
-            placeholder="my-backingstore"
-            aria-label={t('ceph-storage-plugin~Backing Store Name')}
+            data-test="namespacestore-name"
+            placeholder="my-namespacestore"
+            aria-label={t('ceph-storage-plugin~Namespace Store Name')}
           />
         </Tooltip>
       </FormGroup>
@@ -226,40 +204,31 @@ const CreateBackingStoreForm: React.FC<CreateBackingStoreFormProps> = withHandle
         isRequired
       >
         <Dropdown
+          id="providers"
           className="nb-bs-ns-form-entry__dropdown"
           buttonClassName="nb-bs-ns-form-entry__dropdown"
-          dataTest="backingstore-provider"
+          dataTest="namespacestore-provider"
           onChange={setProvider}
           items={PROVIDERS}
           selectedKey={provider}
         />
       </FormGroup>
-      {provider === BC_PROVIDERS.GCP && (
-        <GCPEndpointType
-          state={providerDataState}
-          dispatch={providerDataDispatch}
-          namespace={CEPH_STORAGE_NAMESPACE}
-        />
-      )}
       {(provider === BC_PROVIDERS.AWS ||
         provider === BC_PROVIDERS.S3 ||
         provider === BC_PROVIDERS.IBM ||
         provider === BC_PROVIDERS.AZURE) && (
         <S3EndPointType
-          type={StoreType.BS}
+          type={StoreType.NS}
           provider={provider}
           namespace={CEPH_STORAGE_NAMESPACE}
           state={providerDataState}
           dispatch={providerDataDispatch}
         />
       )}
-      {provider === BC_PROVIDERS.PVC && (
-        <PVCType state={providerDataState} dispatch={providerDataDispatch} />
-      )}
       <ButtonBar errorMessage={errorMessage} inProgress={inProgress}>
         <ActionGroup>
-          <Button type="submit" data-test="backingstore-create-button" variant="primary">
-            {t('ceph-storage-plugin~Create Backing Store')}
+          <Button type="submit" data-test="namespacestore-create-button" variant="primary">
+            {t('ceph-storage-plugin~Create')}
           </Button>
           <Button onClick={cancel} variant="secondary">
             {t('ceph-storage-plugin~Cancel')}
@@ -270,11 +239,11 @@ const CreateBackingStoreForm: React.FC<CreateBackingStoreFormProps> = withHandle
   );
 });
 
-export default CreateBackingStoreForm;
+export default NamespaceStoreForm;
 
-type CreateBackingStoreFormProps = ModalComponentProps & {
+type NamespaceStoreFormProps = ModalComponentProps & {
   isPage?: boolean;
-  namespace?: string;
+  namespace: string;
   className?: string;
   csv?: K8sResourceKind;
 };

@@ -241,3 +241,42 @@ export type ResourceConstraints = {
 export type DiscoveredDisk = {
   node: string;
 } & DiskMetadata;
+
+export type StoreAction =
+  | { type: 'setSecretName'; value: string }
+  | { type: 'setSecretKey'; value: string }
+  | { type: 'setAccessKey'; value: string }
+  | { type: 'setRegion'; value: string }
+  | { type: 'setTarget'; value: string }
+  | { type: 'setEndpoint'; value: string };
+
+export type ProviderDataState = {
+  secretName: string;
+  secretKey: string;
+  accessKey: string;
+  region: string;
+  target: string;
+  endpoint: string;
+};
+
+export type Payload = K8sResourceCommon & {
+  spec: {
+    type: string;
+    ssl: boolean;
+    [key: string]: any;
+  };
+};
+
+export type BackingStoreProviderDataState = ProviderDataState & {
+  numVolumes: number;
+  gcpJSON: string;
+  volumeSize: string;
+  storageClass: string;
+};
+
+export type BackingStoreAction =
+  | StoreAction
+  | { type: 'setGcpJSON'; value: string }
+  | { type: 'setVolumes'; value: number }
+  | { type: 'setVolumeSize'; value: string }
+  | { type: 'setStorageClass'; value: string };
