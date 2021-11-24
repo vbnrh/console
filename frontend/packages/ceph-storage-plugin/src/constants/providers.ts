@@ -7,6 +7,7 @@ export enum BC_PROVIDERS {
   GCP = 'Google Cloud Storage',
   AZURE = 'Azure Blob',
   IBM = 'IBM COS',
+  FILESYSTEM = 'Filesystem'
 }
 
 export const PROVIDERS_NOOBAA_MAP = {

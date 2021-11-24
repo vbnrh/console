@@ -176,6 +176,13 @@ const NamespaceStoreForm: React.FC<NamespaceStoreFormProps> = withHandlePromise<
           dispatch={providerDataDispatch}
         />
       )}
+      {
+        provider === BC_PROVIDERS.FILESYSTEM && (
+          <>
+            <h1> Filesystem selected</h1>
+          </>
+        )
+      }
       <ButtonBar errorMessage={errorMessage} inProgress={inProgress}>
         <ActionGroup>
           <Button type="submit" data-test="namespacestore-create-button" variant="primary">
